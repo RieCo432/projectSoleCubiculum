@@ -10,14 +10,14 @@ class Room:
         self.horizontal_length_long = 149
 
         # empty lists for walls
-        self.n = None
-        self.e = None
-        self.s = None
-        self.w = None
-        self.ne = None
-        self.se = None
-        self.sw = None
-        self.nw = None
+        self.north = None
+        self.east = None
+        self.south = None
+        self.west = None
+        self.north_east = None
+        self.south_east = None
+        self.south_west = None
+        self.north_west = None
 
         self.all_edges_in_order = []
 
