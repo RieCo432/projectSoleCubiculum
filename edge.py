@@ -14,6 +14,6 @@ class Edge:
         last = first + self.length
 
         for i in range(first, last):
-            self.leds.append(last)
+            self.leds.append(i)
 
         return last
