@@ -1,3 +1,7 @@
+import math
+from datetime import datetime
+
+import color_helper
 from circular_list import CircularList
 from edge import Edge
 from Compass import DataFlow, Direction
@@ -53,3 +57,62 @@ class Room:
             first = edge.allocate_leds(first)
 
         print(self.all_edges_in_order)
+
+    # effects go here
+
+    # start is number of LED where the starting hue is applied
+    # end is number of LED where starting hue needs to go to
+    # cycles determines how many full rotations are done (for less than full rotation use 0)
+    # speed is how quickly the starting hue moves around in LEDs per second
+    # starting hue determines which color is used at the main point, hue is in degrees (0 is red, 120 is green,
+    # 240 is green)
+    def rainbow_ceiling_only(self, start=None, end=None, cycles=0, speed=10, starting_hue=0.0):
+        # initialize a circular list to store led numbers that are involved
+        list_of_leds = CircularList()
+
+        # if no starting point is given, select first led of first ceiling edge
+        if start is None:
+            start = self.ceiling_edges_clockwise[0].leds[0]
+        # if no end is given, select last led of last ceiling edge
+        if end is None:
+            end = self.ceiling_edges_clockwise[-1].leds[-1]
+        # iterate through edges and add the led numbers to the circular list
+        for edge in self.ceiling_edges_clockwise:
+            for led in edge.leds:
+                list_of_leds.append(led)
+
+        # find index of starting led in list and shift backwards so starting LED is at the beginning
+        shift_amount = list_of_leds.index(start)
+        list_of_leds.shiftBackwardN(shift_amount)
+
+        # determine how much the hue needs to increase per LED/step
+        hue_increase_per_led = 360.0 / len(list_of_leds)
+
+        # initialize loop and counter variables
+        cycle = 0
+        stop = False
+        stamp = None
+        while not stop:
+            # if no timestamp is set, or enough time has elapsed, update lighting
+            if stamp is None or (datetime.now() - stamp).total_seconds() >= 1.0 / speed:
+                hue = starting_hue  # reset hue to starting hue
+                # for each LED number in list, set color to current hue, increase hue and modulo 360 it
+                for led_num in list_of_leds:
+                    self.leds[led_num] = color_helper.hue_to_rgb(hue)
+                    hue += hue_increase_per_led
+                    hue %= 360
+                # if the first LED in the list is the endpoint and desired number of cycles has been reached, stop loop
+                if list_of_leds[0] == end and cycle == cycles:
+                    stop = True
+                # if first LED in list is endpoint, but number of cycles has not been reached yet, increase cycle
+                # counter
+                if list_of_leds[0] == end:
+                    cycle += 1
+                # shift LED list back wards by one
+                list_of_leds.shiftBackward()
+                # update physical LEDs and record new timestamp
+                self.leds.show()
+                stamp = datetime.now()
+
+
+
