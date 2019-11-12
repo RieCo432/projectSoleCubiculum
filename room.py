@@ -97,7 +97,7 @@ class Room:
                 hue = starting_hue  # reset hue to starting hue
                 # for each LED number in list, set color to current hue, increase hue and modulo 360 it
                 for led_num in list_of_leds:
-                    self.leds[led_num] = color_helper.hue_to_rgb(int(math.floor(hue)))
+                    self.leds[led_num] = color_helper.hue_to_rgb(math.floor(hue*10)/10)
                     hue += hue_increase_per_led
                     hue %= 360
                 # if the first LED in the list is the endpoint and desired number of cycles has been reached, stop loop
