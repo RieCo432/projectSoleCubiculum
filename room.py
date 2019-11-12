@@ -90,10 +90,10 @@ class Room:
         # initialize loop and counter variables
         cycle = 0
         stop = False
-        stamp = None
+        stamp = datetime.now()
         while not stop:
             # if no timestamp is set, or enough time has elapsed, update lighting
-            if True # stamp is None or (datetime.now() - stamp).total_seconds() >= 1.0 / speed:
+            if True: # stamp is None or (datetime.now() - stamp).total_seconds() >= 1.0 / speed:
                 hue = starting_hue  # reset hue to starting hue
                 # for each LED number in list, set color to current hue, increase hue and modulo 360 it
                 for led_num in list_of_leds:
