@@ -100,6 +100,7 @@ class Room:
                     self.leds[led_num] = color_helper.hue_to_rgb(hue)
                     hue += hue_increase_per_led
                     hue %= 360
+                    hue = int(math.floor(hue))
                 # if the first LED in the list is the endpoint and desired number of cycles has been reached, stop loop
                 if list_of_leds[0] == end and cycle == cycles:
                     stop = True
