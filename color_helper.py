@@ -35,6 +35,13 @@ def hue_to_rgb(H, S=1.0, B=1.0):
     return R, G, B
 
 
+def rgb_to_hue(rgb):
+
+    R = rgb[0]
+    G = rgb[1]
+    B = rgb[2]
+
+
 if __name__ == "__main__":
 
     print(hue_to_rgb(0))

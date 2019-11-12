@@ -1,10 +1,8 @@
-import math
 from datetime import datetime
 
 import color_helper
 from circular_list import CircularList
-from edge import Edge
-from Compass import DataFlow, Direction
+
 
 class Room:
 
@@ -55,8 +53,6 @@ class Room:
         first = 0
         for edge in self.all_edges_in_order:
             first = edge.allocate_leds(first)
-
-        print(self.all_edges_in_order)
 
     # effects go here
 
@@ -111,7 +107,10 @@ class Room:
                 # shift LED list back wards by one
                 list_of_leds.shiftBackward()
                 # update physical LEDs and record new timestamp
-                self.leds.show()
+                if not self.demo:
+                    self.leds.show()
+                else:
+                    print(self.leds)
                 stamp = datetime.now()
 
 
