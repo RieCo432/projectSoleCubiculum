@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 
 import color_helper
@@ -90,7 +91,7 @@ class Room:
         stamp = None
         while not stop:
             # if no timestamp is set, or enough time has elapsed, update lighting
-            if stamp is None or (datetime.now() - stamp).total_seconds() >= 1.0 / speed:
+            if True # stamp is None or (datetime.now() - stamp).total_seconds() >= 1.0 / speed:
                 hue = starting_hue  # reset hue to starting hue
                 # for each LED number in list, set color to current hue, increase hue and modulo 360 it
                 for led_num in list_of_leds:
@@ -104,14 +105,14 @@ class Room:
                 # counter
                 if list_of_leds[0] == end:
                     cycle += 1
-                # shift LED list back wards by one
-                list_of_leds.shiftBackward()
+                # shift LED list backwards by one
+                list_of_leds.shiftBackwardN(int(math.floor(speed * (datetime.now() - stamp).total_seconds())))
+                stamp = datetime.now()
                 # update physical LEDs and record new timestamp
                 if not self.demo:
                     self.leds.show()
                 else:
                     print(self.leds)
-                stamp = datetime.now()
 
 
 
