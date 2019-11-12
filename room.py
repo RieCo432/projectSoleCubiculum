@@ -100,13 +100,6 @@ class Room:
                     self.leds[led_num] = color_helper.hue_to_rgb(math.floor(hue))
                     hue += hue_increase_per_led
                     hue %= 360
-                # if the first LED in the list is the endpoint and desired number of cycles has been reached, stop loop
-                if list_of_leds[0] == end and cycle == cycles:
-                    stop = True
-                # if first LED in list is endpoint, but number of cycles has not been reached yet, increase cycle
-                # counter
-                if list_of_leds[0] == end:
-                    cycle += 1
 
                 # shift LED list backwards if needed
                 theoretical_movement = int(math.floor(speed * (datetime.now() - stamp).total_seconds()))
@@ -114,13 +107,22 @@ class Room:
                     list_of_leds.shiftBackwardN(theoretical_movement)
                     stamp = datetime.now()
 
+                # if endpoint LED is inside next movement and desired number of cycles has been reached, stop loop
+                if end in list_of_leds[0:theoretical_movement+1] and cycle == cycles:
+                    stop = True
+
+                # if endpoint LED is inside next movement, but number of cycles has not been reached yet, increase cycle
+                # counter
+                if end in list_of_leds[0:theoretical_movement+1]:
+                    cycle += 1
+
                 # update physical LEDs and record new timestamp
                 if not self.demo:
                     self.leds.show()
                 else:
                     pass
-                    # print(list_of_leds._data)
-                    # time.sleep(0.05)
+                    print(list_of_leds._data)
+                    # time.sleep(0.02)
 
 
 
