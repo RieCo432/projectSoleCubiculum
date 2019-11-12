@@ -1,6 +1,6 @@
 class CircularList(list):
 
-    def __init__(self, data):
+    def __init__(self, data=None):
         super(CircularList, self).__init__(data)
         if data is not None:
             self._list = list(data)
