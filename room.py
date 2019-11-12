@@ -1,6 +1,6 @@
 import math
 from datetime import datetime
-
+import time
 import color_helper
 from circular_list import CircularList
 
@@ -13,11 +13,13 @@ class Room:
                              s315.length])
 
         try:
-            import Adafruit_WS2801 as af
+            import adafruit_ws2801 as af
             import board
             self.demo = False
             self.leds = af.WS2801(board.SCK, board.MOSI, self.num_leds, auto_write=False)
         except ImportError:
+            print("running in demo mode")
+            time.sleep(3)
             self.demo = True
             self.leds = [(0, 0, 0)] * self.num_leds
 
