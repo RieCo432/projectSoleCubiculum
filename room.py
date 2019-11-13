@@ -65,7 +65,7 @@ class Room:
     # speed is how quickly the starting hue moves around in LEDs per second
     # starting hue determines which color is used at the main point, hue is in degrees (0 is red, 120 is green,
     # 240 is green)
-    def rainbow_ceiling_only(self, start=None, end=None, cycles=0, speed=10, starting_hue=0.0):
+    def rainbow_ceiling_only(self, start=None, end=None, cycles=0, speed=10, starting_hue=0.0, include_vertical=False):
         # initialize a circular list to store led numbers that are involved
         list_of_leds = CircularList()
 
@@ -75,10 +75,20 @@ class Room:
         # if no end is given, select last led of last ceiling edge
         if end is None:
             end = self.ceiling_edges_clockwise[-1].leds[-1]
-        # iterate through edges and add the led numbers to the circular list
-        for edge in self.ceiling_edges_clockwise:
-            for led in edge.leds:
-                list_of_leds.append(led)
+        if include_vertical:
+            # iterate through all edges in order and add LED numbers of ceiling strips to list, add list of LEDs in
+            # vertical edges as list so they function as a single LED
+            for edge in self.all_edges_in_order:
+                if edge in self.ceiling_edges_clockwise:
+                    for led in edge.leds:
+                        list_of_leds.append(led)
+                else:
+                    list_of_leds.append(edge.leds)
+        else:
+            # iterate through edges and add the led numbers to the circular list
+            for edge in self.ceiling_edges_clockwise:
+                for led in edge.leds:
+                    list_of_leds.append(led)
 
         # find index of starting led in list and shift backwards so starting LED is at the beginning
         shift_amount = list_of_leds.index(start)
@@ -95,9 +105,17 @@ class Room:
             # if no timestamp is set, or enough time has elapsed, update lighting
             if True: # stamp is None or (datetime.now() - stamp).total_seconds() >= 1.0 / speed:
                 hue = starting_hue  # reset hue to starting hue
-                # for each LED number in list, set color to current hue, increase hue and modulo 360 it
-                for led_num in list_of_leds:
-                    self.leds[led_num] = color_helper.hue_to_rgb(math.floor(hue))
+                # for each entry in list, check if entry is a list
+                # if yes, set color to current hue for every LED nunber in list
+                # if not, set color of the specific LED to current hue
+                #
+                # then increase hue and modulo 360 it
+                for entry in list_of_leds:
+                    if type(entry) == type(list()):
+                        for led_num in entry:
+                            self.leds[led_num] = color_helper.hue_to_rgb(math.floor(hue))
+                    else:
+                        self.leds[entry] = color_helper.hue_to_rgb(math.floor(hue))
                     hue += hue_increase_per_led
                     hue %= 360
 

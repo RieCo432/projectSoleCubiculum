@@ -5,4 +5,4 @@ from config import build_living_room
 
 living_room = build_living_room()
 
-living_room.rainbow_ceiling_only()
+living_room.rainbow_ceiling_only(speed=10, include_vertical=True)
