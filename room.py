@@ -4,10 +4,10 @@ import time
 import color_helper
 from circular_list import CircularList
 
-
 class Room:
 
-    def __init__(self, num_leds, s0, s45, s90, s135, s180, s225, s270, s315):
+    def __init__(self, num_leds, s0, s45, s90, s135, s180, s225, s270, s315, init_philips_hue=False,
+                 philips_hue_IP="0.0.0.0", light_names=[]):
 
         self.num_leds = sum([s0.length, s45.length, s90.length, s135.length, s180.length, s225.length, s270.length,
                              s315.length])
@@ -22,6 +22,27 @@ class Room:
             time.sleep(3)
             self.demo = True
             self.leds = [(0, 0, 0)] * self.num_leds
+
+        # set up philips hue
+        self.phue_setup_done = False
+        try:
+            import phue
+            try:
+                self.phuebridge = phue.Bridge(philips_hue_IP)
+                self.phuebridge.connect()
+                self.phue_light_names = []
+                all_lights = self.phuebridge.get_light_objects()
+                for light in all_lights:
+                    if light.name in light_names:
+                        light_names.remove(light.name)
+                        self.phue_light_names.append(light.name)
+                if len(light_names) == 0:
+                    self.phue_setup_done = True
+            except phue.PhueRegistrationException:
+                print("Registration Error, link button not pressed in the past 30 seconds")
+        except ImportError:
+            print("Error importing phue")
+
 
         self.colors = []
         for i in range(self.num_leds):
@@ -58,6 +79,21 @@ class Room:
             first = edge.allocate_leds(first)
 
     # effects go here
+
+    # turns all LEDs off
+    def leds_off(self):
+        if not self.demo:
+            self.leds.fill((0, 0, 0))
+            self.leds.show()
+
+    # turn off hue lights
+    def hue_off(self):
+        if self.phue_setup_done:
+            self.phuebridge.set_light(self.phue_light_names, "on", False)
+
+    def hue_on(self):
+        if self.phue_setup_done:
+            self.phuebridge.set_light(self.phue_light_names, "on", True)
 
     # start is number of LED where the starting hue is applied
     # end is number of LED where starting hue needs to go to
