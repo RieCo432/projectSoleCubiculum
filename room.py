@@ -135,25 +135,20 @@ class Room:
         return brightest/255
 
     def set_brightness(self, final_brightness):
-        for led in self.leds:
-            if led[0] >= led[1] and led[0] >= led[2]:
-                g_to_r = led[1] / led[0]
-                b_to_r = led[2] / led[0]
-                led[0] = 255 * final_brightness
-                led[1] = g_to_r * led[0]
-                led[2] = b_to_r * led[0]
-            elif led[1] >= led[0] and led[0] >= led[2]:
-                r_to_g = led[0] / led[1]
-                b_to_g = led[2] / led[1]
-                led[1] = 255 * final_brightness
-                led[0] = r_to_g * led[1]
-                led[2] = b_to_g * led[1]
-            elif led[2] >= led[0] and led[0] >= led[1]:
-                r_to_b = led[0] / led[2]
-                g_to_b = led[1] / led[3]
-                led[2] = 255 * final_brightness
-                led[0] = r_to_b * led[2]
-                led[1] = g_to_b * led[2]
+        for led_index in range(len(self.leds)):
+            r = self.leds[led_index][0]
+            g = self.leds[led_index][1]
+            b = self.leds[led_index][2]
+            if r >= g and r >= b:
+                new_r = 255 * final_brightness
+                color = (new_r, g / r * new_r, b / r * new_r)
+            elif g >= r and g >= b:
+                new_g = 255 * final_brightness
+                color = (r / g * new_g, new_g, b / g * new_g)
+            elif b >= r and b >= g:
+                new_b = 255 * final_brightness
+                color = (r / b * new_b, g / b * new_b, new_b)
+            self.leds[led_index] = color
 
     # start is number of LED where the starting hue is applied
     # end is number of LED where starting hue needs to go to
