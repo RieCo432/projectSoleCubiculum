@@ -139,6 +139,8 @@ class Room:
 
     def set_brightness(self, final_brightness):
         brightness = self.get_brightness()
+        if brightness == 0:
+            brightness = 0.001
         for led_index in range(len(self.leds)):
             r = self.leds[led_index][0]
             g = self.leds[led_index][1]
