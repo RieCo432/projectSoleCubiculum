@@ -139,18 +139,14 @@ class Room:
             r = self.leds[led_index][0]
             g = self.leds[led_index][1]
             b = self.leds[led_index][2]
-            color = (r, g, b)
-            if r >= g and r >= b:
-                new_r = 255 * final_brightness
-                color = (new_r, g / r * new_r, b / r * new_r)
-            elif g >= r and g >= b:
-                new_g = 255 * final_brightness
-                color = (r / g * new_g, new_g, b / g * new_g)
-            elif b >= r and b >= g:
-                new_b = 255 * final_brightness
-                color = (r / b * new_b, g / b * new_b, new_b)
 
-            color_int = (min(int(color[0]), 255), min(int(color[1]), 255), min(int(color[2]), 255))
+            brightness = self.get_brightness()
+
+            new_r = final_brightness / brightness * r
+            new_g = final_brightness / brightness * g
+            new_b = final_brightness / brightness * b
+
+            color_int = (min(int(new_r), 255), min(int(new_g), 255), min(int(new_b), 255))
             self.leds[led_index] = color_int
 
     # start is number of LED where the starting hue is applied
