@@ -103,7 +103,7 @@ class Room:
             while True:
                 elapsed = (datetime.now() - stamp).total_seconds()
                 bri_increase = percent_per_second * elapsed
-                bri = self.leds.brightness()
+                bri = self.leds.brightness
                 self.leds.brightness(min(bri + bri_increase, final_brightness, 1.0))
                 self.leds.show()
                 if bri >= final_brightness:
@@ -116,7 +116,7 @@ class Room:
             while True:
                 elapsed = (datetime.now() - stamp).total_seconds()
                 bri_decrease = percent_per_second * elapsed
-                bri = self.leds.brightness()
+                bri = self.leds.brightness
                 self.leds.brightness(max(bri + bri_decrease, final_brightness, 0.0))
                 self.leds.show()
                 if bri <= final_brightness:
