@@ -103,8 +103,8 @@ class Room:
             while True:
                 elapsed = (datetime.now() - stamp).total_seconds()
                 bri_increase = percent_per_second * elapsed
-                bri = self.leds.brightness
-                self.leds.brightness = min(bri + bri_increase, final_brightness, 1.0)
+                bri = self.get_brightness()
+                self.set_brightness(min(bri + bri_increase, final_brightness, 1.0))
                 self.leds.show()
                 if bri >= final_brightness:
                     break
@@ -116,11 +116,44 @@ class Room:
             while True:
                 elapsed = (datetime.now() - stamp).total_seconds()
                 bri_decrease = percent_per_second * elapsed
-                bri = self.leds.brightness
-                self.leds.brightness = max(bri + bri_decrease, final_brightness, 0.0)
+                bri = self.get_brightness()
+                self.set_brightness(max(bri + bri_decrease, final_brightness, 0.0))
                 self.leds.show()
                 if bri <= final_brightness:
                     break
+
+    def get_brightness(self):
+        r = 0
+        g = 0
+        b = 0
+        for led in self.leds:
+            r = max(r, led[0])
+            g = max(g, led[1])
+            b = max(b, led[2])
+        brightest = max(r, g, b)
+
+        return brightest/255
+
+    def set_brightness(self, final_brightness):
+        for led in self.leds:
+            if led[0] >= led[1] and led[0] >= led[2]:
+                g_to_r = led[1] / led[0]
+                b_to_r = led[2] / led[0]
+                led[0] = 255 * final_brightness
+                led[1] = g_to_r * led[0]
+                led[2] = b_to_r * led[0]
+            elif led[1] >= led[0] and led[0] >= led[2]:
+                r_to_g = led[0] / led[1]
+                b_to_g = led[2] / led[1]
+                led[1] = 255 * final_brightness
+                led[0] = r_to_g * led[1]
+                led[2] = b_to_g * led[1]
+            elif led[2] >= led[0] and led[0] >= led[1]:
+                r_to_b = led[0] / led[2]
+                g_to_b = led[1] / led[3]
+                led[2] = 255 * final_brightness
+                led[0] = r_to_b * led[2]
+                led[1] = g_to_b * led[2]
 
     # start is number of LED where the starting hue is applied
     # end is number of LED where starting hue needs to go to
