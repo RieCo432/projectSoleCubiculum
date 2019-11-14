@@ -148,7 +148,9 @@ class Room:
             elif b >= r and b >= g:
                 new_b = 255 * final_brightness
                 color = (r / b * new_b, g / b * new_b, new_b)
-            self.leds[led_index] = color
+
+            color_int = (int(color[0]), int(color[1]), int(color[2]))
+            self.leds[led_index] = color_int
 
     # start is number of LED where the starting hue is applied
     # end is number of LED where starting hue needs to go to
