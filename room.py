@@ -118,10 +118,10 @@ class Room:
                 print("elapsed: ", elapsed)
                 stamp = datetime.now()
                 bri_decrease = percent_per_second * elapsed
-                print("bri_dec: ", bri_decrease)
                 bri = self.get_brightness()
-                print("bri: ", bri)
+                ante_set = datetime.now()
                 self.set_brightness(max(bri - bri_decrease, final_brightness, 0.0))
+                print("setting brightness: ", (datetime.now() - ante_set).total_seconds())
                 if bri <= final_brightness:
                     break
 
@@ -138,12 +138,11 @@ class Room:
         return brightest/255
 
     def set_brightness(self, final_brightness):
+        brightness = self.get_brightness()
         for led_index in range(len(self.leds)):
             r = self.leds[led_index][0]
             g = self.leds[led_index][1]
             b = self.leds[led_index][2]
-
-            brightness = self.get_brightness()
 
             new_r = final_brightness / brightness * r
             new_g = final_brightness / brightness * g
