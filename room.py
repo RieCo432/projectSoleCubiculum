@@ -91,9 +91,36 @@ class Room:
         if self.phue_setup_done:
             self.phuebridge.set_light(self.phue_light_names, "on", False)
 
+    # turn on hue lights
     def hue_on(self):
         if self.phue_setup_done:
             self.phuebridge.set_light(self.phue_light_names, "on", True)
+
+    # gradually increase brightness
+    def increase_brightness(self, final_brightness=1.0, percent_per_second=0.40):
+        if not self.demo:
+            stamp = datetime.now()
+            while True:
+                elapsed = (datetime.now() - stamp).total_seconds()
+                bri_increase = percent_per_second * elapsed
+                bri = self.leds.brightness()
+                self.leds.brightness(min(bri + bri_increase, final_brightness, 1.0))
+                self.leds.show()
+                if bri >= final_brightness:
+                    break
+
+    # gradually decrease brightness
+    def decrease_brightness(self, final_brightness=0.0, percent_per_second=0.40):
+        if not self.demo:
+            stamp = datetime.now()
+            while True:
+                elapsed = (datetime.now() - stamp).total_seconds()
+                bri_decrease = percent_per_second * elapsed
+                bri = self.leds.brightness()
+                self.leds.brightness(max(bri + bri_decrease, final_brightness, 0.0))
+                self.leds.show()
+                if bri <= final_brightness:
+                    break
 
     # start is number of LED where the starting hue is applied
     # end is number of LED where starting hue needs to go to
