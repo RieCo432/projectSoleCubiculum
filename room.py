@@ -115,10 +115,13 @@ class Room:
             stamp = datetime.now()
             while True:
                 elapsed = (datetime.now() - stamp).total_seconds()
+                print("elapsed: ", elapsed)
                 stamp = datetime.now()
                 bri_decrease = percent_per_second * elapsed
+                print("bri_dec: ", bri_decrease)
                 bri = self.get_brightness()
-                self.set_brightness(max(bri + bri_decrease, final_brightness, 0.0))
+                print("bri: ", bri)
+                self.set_brightness(max(bri - bri_decrease, final_brightness, 0.0))
                 if bri <= final_brightness:
                     break
 
