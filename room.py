@@ -102,10 +102,10 @@ class Room:
             stamp = datetime.now()
             while True:
                 elapsed = (datetime.now() - stamp).total_seconds()
+                stamp = datetime.now()
                 bri_increase = percent_per_second * elapsed
                 bri = self.get_brightness()
                 self.set_brightness(min(bri + bri_increase, final_brightness, 1.0))
-                self.leds.show()
                 if bri >= final_brightness:
                     break
 
@@ -115,10 +115,10 @@ class Room:
             stamp = datetime.now()
             while True:
                 elapsed = (datetime.now() - stamp).total_seconds()
+                stamp = datetime.now()
                 bri_decrease = percent_per_second * elapsed
                 bri = self.get_brightness()
                 self.set_brightness(max(bri + bri_decrease, final_brightness, 0.0))
-                self.leds.show()
                 if bri <= final_brightness:
                     break
 
