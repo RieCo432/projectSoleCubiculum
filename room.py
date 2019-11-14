@@ -149,6 +149,9 @@ class Room:
             color_int = (min(int(new_r), 255), min(int(new_g), 255), min(int(new_b), 255))
             self.leds[led_index] = color_int
 
+        if not self.demo:
+            self.leds.show()
+
     # start is number of LED where the starting hue is applied
     # end is number of LED where starting hue needs to go to
     # cycles determines how many full rotations are done (for less than full rotation use 0)
