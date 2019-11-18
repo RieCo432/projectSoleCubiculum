@@ -27,7 +27,7 @@ class CircularList(MutableSequence):
         return len(self._data)
 
     def __getitem__(self, item):
-        return self._data[item % len(self._data)]
+        return self._data[item]
 
     def insert(self, index, val):
         self._data[index] = val
@@ -36,7 +36,7 @@ class CircularList(MutableSequence):
         self._data.append(val)
 
     def __setitem__(self, key, value):
-        self._data[key % len(self._data)] = value
+        self._data[key] = value
 
     def shiftForward(self):  # shift all elements one index up, with wrap around
         last = self[-1]

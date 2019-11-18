@@ -33,26 +33,32 @@ class Room:
 
         # set up philips hue, if fails, features won't be used
         self.phue_setup_done = False
-        try:
-            import phue  # import the python hue library
+        if init_philips_hue:
             try:
-                self.phuebridge = phue.Bridge(philips_hue_ip)  # setup bridge
-                self.phuebridge.connect()  # connect to bridge
-                self.phue_light_names = []  # store all found lights
-                all_lights = self.phuebridge.get_light_objects()  # retrieve all light objects from bridge
-                # cycle through all lights, check if light name in list supplied to init function, then remove from
-                # user supplied list and append to list from above
-                for light in all_lights:
-                    if light.name in light_names:
-                        light_names.remove(light.name)
-                        self.phue_light_names.append(light.name)
-                # if all lights were found, phue_setup_done set to true
-                if len(light_names) == 0:
-                    self.phue_setup_done = True
-            except phue.PhueRegistrationException:
-                print("Registration Error, link button not pressed in the past 30 seconds")
-        except ImportError:
-            print("Error importing phue")
+                import phue  # import the python hue library
+                try:
+                    self.phuebridge = phue.Bridge(philips_hue_ip)  # setup bridge
+                    self.phuebridge.connect()  # connect to bridge
+                    self.phue_light_names = []  # store all found lights
+                    all_lights = self.phuebridge.get_light_objects()  # retrieve all light objects from bridge
+                    # cycle through all lights, check if light name in list supplied to init function, then remove from
+                    # user supplied list and append to list from above
+                    for light in all_lights:
+                        if light.name in light_names:
+                            light_names.remove(light.name)
+                            self.phue_light_names.append(light.name)
+                    # if all lights were found, phue_setup_done set to true
+                    if len(light_names) == 0:
+                        self.phue_setup_done = True
+                except phue.PhueRegistrationException:
+                    print("Registration Error, link button not pressed in the past 30 seconds")
+                    pass
+                except phue.PhueRequestTimeout:
+                    print("Connection error")
+                    pass
+            except ImportError:
+                print("Error importing phue")
+                pass
 
         # initialize list containing all color values
         self.colors = []
@@ -184,16 +190,24 @@ class Room:
     # speed is how quickly the starting hue moves around in LEDs per second
     # starting hue determines which color is used at the main point, hue is in degrees (0 is red, 120 is green,
     # 240 is green)
-    def rainbow_ceiling_only(self, start=None, end=None, cycles=0, speed=10, starting_hue=0.0, include_vertical=False):
+    def rainbow_horizontal(self, start=None, end=None, cycles=0, speed=10, starting_hue=0.0, include_vertical=False):
         # initialize a circular list to store led numbers that are involved
         list_of_leds = CircularList()
 
         # if no starting point is given, select first led of first ceiling edge
-        if start is None:
-            start = self.ceiling_edges_clockwise[0].leds[0]
-        # if no end is given, select last led of last ceiling edge
-        if end is None:
-            end = self.ceiling_edges_clockwise[-1].leds[-1]
+        if speed >= 0:
+            if start is None:
+                start = self.ceiling_edges_clockwise[0].leds[0]
+            # if no end is given, select last led of last ceiling edge
+            if end is None:
+                end = self.ceiling_edges_clockwise[-1].leds[-1]
+        elif speed < 0:
+            if start is None:
+                start = self.ceiling_edges_clockwise[-1].leds[-1]
+            # if no end is given, select last led of last ceiling edge
+            if end is None:
+                end = self.ceiling_edges_clockwise[0].leds[0]
+
         if include_vertical:
             # iterate through all edges in order and add LED numbers of ceiling strips to list, add list of LEDs in
             # vertical edges as list so they function as a single LED
@@ -220,46 +234,63 @@ class Room:
         cycle = 0
         stop = False
         stamp = datetime.now()
+        theoretical_movement = 0
         while not stop:
-            # if no timestamp is set, or enough time has elapsed, update lighting
-            if True: # stamp is None or (datetime.now() - stamp).total_seconds() >= 1.0 / speed:
-                hue = starting_hue  # reset hue to starting hue
-                # for each entry in list, check if entry is a list
-                # if yes, set color to current hue for every LED nunber in list
-                # if not, set color of the specific LED to current hue
-                #
-                # then increase hue and modulo 360 it
-                for entry in list_of_leds:
-                    if type(entry) == type(list()):
-                        for led_num in entry:
-                            self.leds[led_num] = color_helper.hue_to_rgb(math.floor(hue))
-                    else:
-                        self.leds[entry] = color_helper.hue_to_rgb(math.floor(hue))
-                    hue += hue_increase_per_led
-                    hue %= 360
+            hue = starting_hue  # reset hue to starting hue
+            # for each entry in list, check if entry is a list
+            # if yes, set color to current hue for every LED nunber in list
+            # if not, set color of the specific LED to current hue
+            #
+            # then increase hue and modulo 360 it
+            for entry in list_of_leds:
+                if type(entry) == type(list()):
+                    for led_num in entry:
+                        self.leds[led_num] = color_helper.hue_to_rgb(math.floor(hue))
+                else:
+                    self.leds[entry] = color_helper.hue_to_rgb(math.floor(hue))
+                hue += hue_increase_per_led
+                hue %= 360
 
-                # shift LED list backwards if needed
-                theoretical_movement = int(math.floor(speed * (datetime.now() - stamp).total_seconds()))
-                if theoretical_movement >= 1:
-                    list_of_leds.shiftBackwardN(theoretical_movement)
-                    stamp = datetime.now()
+            # shift LED list backwards if needed
+            theoretical_movement += speed * (datetime.now() - stamp).total_seconds()
+            stamp = datetime.now()
+            actual_movement = 0
+            if theoretical_movement >= 1:
+                actual_movement = int(math.floor(theoretical_movement))
+                theoretical_movement -= actual_movement
+                list_of_leds.shiftBackwardN(actual_movement)
+            elif theoretical_movement <= -1:
+                actual_movement = - int(math.ceil(theoretical_movement))
+                theoretical_movement += actual_movement
+                list_of_leds.shiftForwardN(actual_movement)
 
+            if actual_movement >= 1:
                 # if endpoint LED is inside next movement and desired number of cycles has been reached, stop loop
-                if end in list_of_leds[0:theoretical_movement+1] and cycle == cycles:
+                if end in list_of_leds[0:actual_movement + 1] and cycle == cycles:
                     stop = True
 
                 # if endpoint LED is inside next movement, but number of cycles has not been reached yet, increase cycle
                 # counter
-                if end in list_of_leds[0:theoretical_movement+1]:
+                if end in list_of_leds[0:actual_movement + 1]:
+                    cycle += 1
+            elif actual_movement <= -1:
+                # if endpoint LED is inside next movement and desired number of cycles has been reached, stop loop
+                if end in list_of_leds[-actual_movement:0] and cycle == cycles:
+                    stop = True
+
+                # if endpoint LED is inside next movement, but number of cycles has not been reached yet, increase cycle
+                # counter
+                if end in list_of_leds[-actual_movement:0]:
                     cycle += 1
 
-                # update physical LEDs and record new timestamp
-                if not self.demo:
-                    self.leds.show()
-                else:
-                    pass
-                    print(list_of_leds._data)
-                    # time.sleep(0.02)
+            # print(self.leds)
+            # update physical LEDs
+            if not self.demo:
+                self.leds.show()
+            else:
+                pass
+                print(datetime.now(), list_of_leds._data)
+                # time.sleep(0.02)
 
 
 
