@@ -184,29 +184,9 @@ class Room:
         if not self.demo:
             self.leds.show()
 
-    # start is number of LED where the starting hue is applied
-    # end is number of LED where starting hue needs to go to
-    # cycles determines how many full rotations are done (for less than full rotation use 0)
-    # speed is how quickly the starting hue moves around in LEDs per second
-    # starting hue determines which color is used at the main point, hue is in degrees (0 is red, 120 is green,
-    # 240 is green)
-    def rainbow_horizontal(self, start=None, end=None, cycles=0, speed=10, starting_hue=0.0, include_vertical=False):
-        # initialize a circular list to store led numbers that are involved
+    # build a list of lists of LEDs, enabling horizontal circular effect with or without vertical elements
+    def build_list_horizontal_circle(self, include_vertical=True):
         list_of_leds = CircularList()
-
-        # if no starting point is given, select first led of first ceiling edge
-        if speed >= 0:
-            if start is None:
-                start = self.ceiling_edges_clockwise[0].leds[0]
-            # if no end is given, select last led of last ceiling edge
-            if end is None:
-                end = self.ceiling_edges_clockwise[-1].leds[-1]
-        elif speed < 0:
-            if start is None:
-                start = self.ceiling_edges_clockwise[-1].leds[-1]
-            # if no end is given, select last led of last ceiling edge
-            if end is None:
-                end = self.ceiling_edges_clockwise[0].leds[0]
 
         if include_vertical:
             # iterate through all edges in order and add LED numbers of ceiling strips to list, add list of LEDs in
@@ -214,83 +194,129 @@ class Room:
             for edge in self.all_edges_in_order:
                 if edge in self.ceiling_edges_clockwise:
                     for led in edge.leds:
-                        list_of_leds.append(led)
+                        list_of_leds.append([led])
                 else:
                     list_of_leds.append(edge.leds)
         else:
             # iterate through edges and add the led numbers to the circular list
             for edge in self.ceiling_edges_clockwise:
                 for led in edge.leds:
-                    list_of_leds.append(led)
+                    list_of_leds.append([led])
+
+        return list_of_leds
+
+    # build a list of lists of LEDs, enabling vertical upwards effect with or without horizontal elements
+    def build_list_vertical_straight(self, include_horizontal = True):
+        list_of_leds = CircularList()
+
+        for i in range(0, self.vertical_edges_up[0].length):
+            list_of_leds.append([self.vertical_edges_up[0].leds[i], self.vertical_edges_up[1].leds[i],
+                                 self.vertical_edges_up[2].leds[i], self.vertical_edges_up[3].leds[i]])
+
+        if include_horizontal:
+            all_horizontal = []
+            for edge in self.ceiling_edges_clockwise:
+                for n in edge.leds:
+                    all_horizontal.append(n)
+
+            list_of_leds.append(all_horizontal)
+
+        return list_of_leds
+
+    # start is the index where the starting hue is applied
+    # end is the index where starting hue completes a cycle
+    # cycles determines how many full rotations are done (for less than full rotation use 0)
+    # speed is how quickly the starting hue moves around in steps per second (1 step = 1 LED)
+    # starting hue determines which color is used at the main point, hue is in degrees (0 is red, 120 is green,
+    # 240 is green)
+    def rainbow(self, list_of_leds, start_index=None, end_index=None, cycles=0, speed=10, starting_hue=0.0):
+        # initialize a circular list to store led numbers that are involved
+
+        # if no starting point is given, select first led of first ceiling edge
+        if speed >= 0:
+            if start_index is None:
+                start_index = 0
+            if end_index is None:
+                end_index = -1
+
+        elif speed < 0:
+            if start_index is None:
+                start_index = -1
+            if end_index is None:
+                end_index = 0
+
+        start = list_of_leds[start_index]
+        end = list_of_leds[end_index]
 
         # find index of starting led in list and shift backwards so starting LED is at the beginning
-        shift_amount = list_of_leds.index(start)
-        list_of_leds.shiftBackwardN(shift_amount)
+        list_of_leds.shiftBackwardN(start_index)
 
         # determine how much the hue needs to increase per LED/step
-        hue_increase_per_led = 360.0 / len(list_of_leds)
+        hue_increase_per_step = 360.0 / len(list_of_leds)
 
         # initialize loop and counter variables
         cycle = 0
         stop = False
         stamp = datetime.now()
         theoretical_movement = 0
+        first_iter = True
+        rest = 0
         while not stop:
-            hue = starting_hue  # reset hue to starting hue
-            # for each entry in list, check if entry is a list
-            # if yes, set color to current hue for every LED nunber in list
-            # if not, set color of the specific LED to current hue
-            #
-            # then increase hue and modulo 360 it
-            for entry in list_of_leds:
-                if type(entry) == type(list()):
-                    for led_num in entry:
-                        self.leds[led_num] = color_helper.hue_to_rgb(math.floor(hue))
-                else:
-                    self.leds[entry] = color_helper.hue_to_rgb(math.floor(hue))
-                hue += hue_increase_per_led
-                hue %= 360
-
-            # shift LED list backwards if needed
-            theoretical_movement += speed * (datetime.now() - stamp).total_seconds()
-            stamp = datetime.now()
+            # move animation if needed
             actual_movement = 0
-            if theoretical_movement >= 1:
-                actual_movement = int(math.floor(theoretical_movement))
-                theoretical_movement -= actual_movement
+            theoretical_movement = speed * (datetime.now() - stamp).total_seconds()
+            if theoretical_movement + rest >= 1:
+                actual_movement = int(math.floor(theoretical_movement + rest))
+                rest = theoretical_movement - actual_movement
                 list_of_leds.shiftBackwardN(actual_movement)
-            elif theoretical_movement <= -1:
-                actual_movement = - int(math.ceil(theoretical_movement))
-                theoretical_movement += actual_movement
+            elif theoretical_movement - rest <= -1:
+                actual_movement = - int(math.ceil(theoretical_movement - rest))
+                rest = theoretical_movement - actual_movement
                 list_of_leds.shiftForwardN(actual_movement)
 
-            if actual_movement >= 1:
-                # if endpoint LED is inside next movement and desired number of cycles has been reached, stop loop
-                if end in list_of_leds[0:actual_movement + 1] and cycle == cycles:
-                    stop = True
+            if actual_movement != 0 or first_iter:
+                if first_iter:
+                    first_iter = False
 
-                # if endpoint LED is inside next movement, but number of cycles has not been reached yet, increase cycle
-                # counter
-                if end in list_of_leds[0:actual_movement + 1]:
-                    cycle += 1
-            elif actual_movement <= -1:
-                # if endpoint LED is inside next movement and desired number of cycles has been reached, stop loop
-                if end in list_of_leds[-actual_movement:0] and cycle == cycles:
-                    stop = True
+                hue = starting_hue  # reset hue to starting hue
+                # for each entry in list, check if entry is a list
+                # if yes, set color to current hue for every LED number in list
+                # if not, set color of the specific LED to current hue
+                #
+                # then increase hue and modulo 360 it
+                for step in list_of_leds:
+                    for led_num in step:
+                        self.leds[led_num] = color_helper.hue_to_rgb(math.floor(hue))
+                    hue += hue_increase_per_step
+                    hue %= 360
 
-                # if endpoint LED is inside next movement, but number of cycles has not been reached yet, increase cycle
-                # counter
-                if end in list_of_leds[-actual_movement:0]:
-                    cycle += 1
+                # update physical LEDs
+                stamp = datetime.now()
+                if not self.demo:
+                    self.leds.show()
+                else:
+                    print(datetime.now(), list_of_leds._data)
 
-            # print(self.leds)
-            # update physical LEDs
-            if not self.demo:
-                self.leds.show()
-            else:
-                pass
-                print(datetime.now(), list_of_leds._data)
-                # time.sleep(0.02)
+                if actual_movement >= 1:
+                    # if endpoint LED is inside next movement and desired number of cycles has been reached, stop loop
+                    if end in list_of_leds[0:actual_movement + 1] and cycle == cycles:
+                        stop = True
+
+                    # if endpoint LED is inside next movement, but number of cycles has not been reached yet,
+                    # increase cycle
+                    # counter
+                    if end in list_of_leds[0:actual_movement + 1]:
+                        cycle += 1
+                elif actual_movement <= -1:
+                    # if endpoint LED is inside next movement and desired number of cycles has been reached, stop loop
+                    if end in list_of_leds[-actual_movement:0] and cycle == cycles:
+                        stop = True
+
+                    # if endpoint LED is inside next movement, but number of cycles has not been reached yet,
+                    # increase cycle
+                    # counter
+                    if end in list_of_leds[-actual_movement:0]:
+                        cycle += 1
 
 
 
