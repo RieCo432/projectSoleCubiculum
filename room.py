@@ -4,14 +4,22 @@ import time
 import color_helper
 from circular_list import CircularList
 
+
 class Room:
 
     def __init__(self, num_leds, s0, s45, s90, s135, s180, s225, s270, s315, init_philips_hue=False,
-                 philips_hue_IP="0.0.0.0", light_names=[]):
+                 philips_hue_ip="0.0.0.0", light_names=None):
 
+        # if no light names are specified, replace with empty list
+        if light_names is None:
+            light_names = []
+
+        # get total number of leds by adding together all edge lengths
         self.num_leds = sum([s0.length, s45.length, s90.length, s135.length, s180.length, s225.length, s270.length,
                              s315.length])
 
+        # try importing the adafruit library and initialize strip. If it fails, demo mode will be used and the strip
+        # is just a list of color tuples
         try:
             import adafruit_ws2801 as af
             import board
@@ -23,19 +31,22 @@ class Room:
             self.demo = True
             self.leds = [(0, 0, 0)] * self.num_leds
 
-        # set up philips hue
+        # set up philips hue, if fails, features won't be used
         self.phue_setup_done = False
         try:
-            import phue
+            import phue  # import the python hue library
             try:
-                self.phuebridge = phue.Bridge(philips_hue_IP)
-                self.phuebridge.connect()
-                self.phue_light_names = []
-                all_lights = self.phuebridge.get_light_objects()
+                self.phuebridge = phue.Bridge(philips_hue_ip)  # setup bridge
+                self.phuebridge.connect()  # connect to bridge
+                self.phue_light_names = []  # store all found lights
+                all_lights = self.phuebridge.get_light_objects()  # retrieve all light objects from bridge
+                # cycle through all lights, check if light name in list supplied to init function, then remove from
+                # user supplied list and append to list from above
                 for light in all_lights:
                     if light.name in light_names:
                         light_names.remove(light.name)
                         self.phue_light_names.append(light.name)
+                # if all lights were found, phue_setup_done set to true
                 if len(light_names) == 0:
                     self.phue_setup_done = True
             except phue.PhueRegistrationException:
@@ -43,13 +54,12 @@ class Room:
         except ImportError:
             print("Error importing phue")
 
-
+        # initialize list containing all color values
         self.colors = []
         for i in range(self.num_leds):
             self.colors.append((0, 0, 0))
-        self.master_brightness = 1.0
 
-        # empty lists for walls
+        # associate supplied edges with correct attributes
         self.north = s0
         self.north_east = s45
         self.east = s90
@@ -59,21 +69,21 @@ class Room:
         self.west = s270
         self.north_west = s315
 
+        # initialize empty lists for various sets
         self.all_edges_in_order = None
         self.ceiling_edges_clockwise = None
         self.vertical_edges_up = None
-        self.ceiling_edges_counterclockwise = None
-        self.vertical_edges_down = None
 
     def set_sequences(self, a1, a2, a3, a4, a5, a6, a7, a8, c1, c2, c3, c4, v1, v2, v3, v4):
+        # create circular lists for each set with corresponding edges
         self.all_edges_in_order = CircularList((a1, a2, a3, a4, a5, a6, a7, a8))
         self.ceiling_edges_clockwise = CircularList((c1, c2, c3, c4))
         self.vertical_edges_up = CircularList((v1, v2, v3, v4))
-        self.ceiling_edges_counterclockwise = self.ceiling_edges_clockwise[::-1]
-        self.vertical_edges_down = self.vertical_edges_up[::-1]
 
     def allocate_leds(self):
-
+        # count up to number of LEDs and assign the number to the correct edges
+        # p.ex. number 0 is supplied to first edge in the list, it will count from 0 to whatever its length is, then
+        # return that number to be used as first for the next edge
         first = 0
         for edge in self.all_edges_in_order:
             first = edge.allocate_leds(first)
@@ -82,6 +92,7 @@ class Room:
 
     # turns all LEDs off
     def leds_off(self):
+        # fill the strip with black and update LEDs
         if not self.demo:
             self.leds.fill((0, 0, 0))
             self.leds.show()
@@ -97,35 +108,43 @@ class Room:
             self.phuebridge.set_light(self.phue_light_names, "on", True)
 
     # gradually increase brightness
+    # brightness will be increased by some amount per second until final brightness is reached
+    # this will take 4 seconds to increase from 0 to 100% at 25% per second
     def increase_brightness(self, final_brightness=1.0, percent_per_second=0.40):
         if not self.demo:
             stamp = datetime.now()
             while True:
                 elapsed = (datetime.now() - stamp).total_seconds()
                 stamp = datetime.now()
-                bri_increase = percent_per_second * elapsed
-                bri = self.get_brightness()
+                bri_increase = percent_per_second * elapsed  # brightness increase step is dependant on time elapsed
+                # since last cycle
+                bri = self.get_brightness()  # obtain current brightness
+                # set brightness to lowest value of either 1.0, final brightness or current brightness + increase
                 self.set_brightness(min(bri + bri_increase, final_brightness, 1.0))
+                # once the brightness reaches the final brightness, the loop will break
                 if bri >= final_brightness:
                     break
 
     # gradually decrease brightness
+    # brightness will be decreased by some amount per second until final brightness is reached
+    # this will take 4 seconds to decrease from 100% to 0% at 25% per second
     def decrease_brightness(self, final_brightness=0.0, percent_per_second=0.40):
         if not self.demo:
             stamp = datetime.now()
             while True:
                 elapsed = (datetime.now() - stamp).total_seconds()
-                print("elapsed: ", elapsed)
                 stamp = datetime.now()
-                bri_decrease = percent_per_second * elapsed
-                bri = self.get_brightness()
-                ante_set = datetime.now()
+                bri_decrease = percent_per_second * elapsed  # brightness decrease step is dependant on time elapsed
+                # since last cycle
+                bri = self.get_brightness()  # obtain current brightness
+                # set brightness to highest value of either 0, final brightness or current brightness - increase
                 self.set_brightness(max(bri - bri_decrease, final_brightness, 0.0))
-                print("setting brightness: ", (datetime.now() - ante_set).total_seconds())
+                # once the brightness reaches the final brightness, the loop will break
                 if bri <= final_brightness:
                     break
 
     def get_brightness(self):
+        # find brightness by finding the absolute highest value for r, g, b in the strip, then divide the highest by 255
         r = 0
         g = 0
         b = 0
@@ -133,25 +152,28 @@ class Room:
             r = max(r, led[0])
             g = max(g, led[1])
             b = max(b, led[2])
-        brightest = max(r, g, b)
+        brightest = max(r, g, b) / 255
 
-        return brightest/255
+        return brightest
 
     def set_brightness(self, final_brightness):
-        brightness = self.get_brightness()
-        if brightness == 0:
+        brightness = self.get_brightness()  # store current brightness
+        if brightness == 0:  # avoid division by 0 error
             brightness = 0.001
-        for led_index in range(len(self.leds)):
+        for led_index in range(len(self.leds)):  # for each led
+            # find r, g, b values
             r = self.leds[led_index][0]
             g = self.leds[led_index][1]
             b = self.leds[led_index][2]
 
+            # new r, g, b values will be ratio of desired brightness by current brightness, times original value
             new_r = final_brightness / brightness * r
             new_g = final_brightness / brightness * g
             new_b = final_brightness / brightness * b
 
+            # build color tuple, limit to 255 and convert to int
             color_int = (min(int(new_r), 255), min(int(new_g), 255), min(int(new_b), 255))
-            self.leds[led_index] = color_int
+            self.leds[led_index] = color_int  # set color
 
         if not self.demo:
             self.leds.show()

@@ -8,7 +8,7 @@ living_room = build_living_room()
 
 living_room.hue_off()
 time.sleep(2)
-living_room.rainbow_ceiling_only(speed=60, include_vertical=True)
+living_room.rainbow_ceiling_only(speed=10, include_vertical=True)
 time.sleep(5)
 living_room.decrease_brightness(percent_per_second=0.1)
 living_room.leds_off()
