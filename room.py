@@ -253,8 +253,8 @@ class Room:
 
         # determine how much the hue needs to increase per LED/step
         hue_increase_per_step = (ending_hue - starting_hue) * compress / len(list_of_leds)
-        if ending_hue % 360 != starting_hue % 360:
-            hue_increase_per_step *= 2
+        # if ending_hue % 360 != starting_hue % 360:
+        #    hue_increase_per_step *= 2
 
         # initialize loop and counter variables
         cycle = 0
@@ -288,13 +288,17 @@ class Room:
                 # then increase hue and modulo 360 it
                 for step in list_of_leds:
                     for led_num in step:
-                        self.leds[led_num] = color_helper.hue_to_rgb(math.floor(hue))
+                        self.leds[led_num] = color_helper.hue_to_rgb(math.floor((hue + 720) % 360))
                     hue += hue_increase_per_step
-                    hue %= 360
-                    if hue >= ending_hue:
-                        rest = hue - ending_hue
-                        hue = starting_hue + rest
-                        hue %= 360
+                    if starting_hue % 360 != ending_hue % 360:
+                        if hue >= ending_hue:
+                            rest = hue - ending_hue
+                            hue = ending_hue - rest
+                            hue_increase_per_step *= -1
+                        if hue <= starting_hue:
+                            rest = starting_hue - hue
+                            hue = starting_hue + rest
+                            hue_increase_per_step *= -1
 
                 # update physical LEDs
                 stamp = datetime.now()
