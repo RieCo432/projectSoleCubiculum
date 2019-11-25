@@ -252,7 +252,9 @@ class Room:
         list_of_leds.shiftBackwardN(start_index)
 
         # determine how much the hue needs to increase per LED/step
-        hue_increase_per_step = (ending_hue - starting_hue) / len(list_of_leds)
+        hue_increase_per_step = (ending_hue - starting_hue) * compress / len(list_of_leds)
+        if ending_hue % 360 != starting_hue % 360:
+            hue_increase_per_step *= 2
 
         # initialize loop and counter variables
         cycle = 0
