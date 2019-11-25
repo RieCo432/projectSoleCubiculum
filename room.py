@@ -3,6 +3,7 @@ from datetime import datetime
 import time
 import color_helper
 from circular_list import CircularList
+import six
 
 
 class Room:
@@ -21,10 +22,18 @@ class Room:
         # try importing the adafruit library and initialize strip. If it fails, demo mode will be used and the strip
         # is just a list of color tuples
         try:
-            import adafruit_ws2801 as af
-            import board
+            if six.PY3:
+                import adafruit_ws2801 as af
+                import board
+                self.leds = af.WS2801(board.SCK, board.MOSI, self.num_leds, auto_write=False)
+            elif six.PY2:
+                import RPi.GPIO as GPIO
+                import Adafruit_WS2801 as af
+                import Adafruit_GPIO.SPI as SPI
+                SPI_PORT = 0
+                SPI_DEVICE = 0
+                self.leds = af.WS2801Pixels(self.num_leds, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE), gpio=GPIO)
             self.demo = False
-            self.leds = af.WS2801(board.SCK, board.MOSI, self.num_leds, auto_write=False)
         except ImportError:
             print("running in demo mode")
             time.sleep(3)
@@ -100,7 +109,10 @@ class Room:
     def leds_off(self):
         # fill the strip with black and update LEDs
         if not self.demo:
-            self.leds.fill((0, 0, 0))
+            if six.PY3:
+                self.leds.fill((0, 0, 0))
+            elif six.PY2:
+                self.leds.clear()
             self.leds.show()
 
     # turn off hue lights
@@ -154,10 +166,17 @@ class Room:
         r = 0
         g = 0
         b = 0
-        for led in self.leds:
-            r = max(r, led[0])
-            g = max(g, led[1])
-            b = max(b, led[2])
+        if six.PY3:
+            for led in self.leds:
+                r = max(r, led[0])
+                g = max(g, led[1])
+                b = max(b, led[2])
+        elif six.PY2:
+            for i in range(self.leds.count()):
+                r_l, g_l, b_l = self.leds.get_pixel_rgb(i)
+                r = max(r, r_l)
+                g = max(g, g_l)
+                b = max(b, b_l)
         brightest = max(r, g, b) / 255
 
         return brightest
@@ -166,11 +185,14 @@ class Room:
         brightness = self.get_brightness()  # store current brightness
         if brightness == 0:  # avoid division by 0 error
             brightness = 0.001
-        for led_index in range(len(self.leds)):  # for each led
+        for led_index in range(self.num_leds):  # for each led
             # find r, g, b values
-            r = self.leds[led_index][0]
-            g = self.leds[led_index][1]
-            b = self.leds[led_index][2]
+            if six.PY3:
+                r = self.leds[led_index][0]
+                g = self.leds[led_index][1]
+                b = self.leds[led_index][2]
+            elif six.PY2:
+                r, g, b = self.leds.get_pixel_rgb(led_index)
 
             # new r, g, b values will be ratio of desired brightness by current brightness, times original value
             new_r = final_brightness / brightness * r
@@ -179,7 +201,10 @@ class Room:
 
             # build color tuple, limit to 255 and convert to int
             color_int = (min(int(new_r), 255), min(int(new_g), 255), min(int(new_b), 255))
-            self.leds[led_index] = color_int  # set color
+            if six.PY3:
+                self.leds[led_index] = color_int  # set color
+            elif six.PY2:
+                self.leds.set_pixel(led_index, af.RGB_to_color(min(int(new_r), 255), min(int(new_g), 255), min(int(new_b), 255)))
 
         if not self.demo:
             self.leds.show()
@@ -288,7 +313,10 @@ class Room:
                 # then increase hue and modulo 360 it
                 for step in list_of_leds:
                     for led_num in step:
-                        self.leds[led_num] = color_helper.hue_to_rgb(math.floor((hue + 720) % 360))
+                        if six.PY3:
+                            self.leds[led_num] = color_helper.hue_to_rgb(math.floor((hue + 720) % 360))
+                        elif six.PY2:
+                            self.leds.set_pixel(led_num, af.RGB_to_color(color_helper.hue_to_rgb(math.floor((hue + 720) % 360))))
                     hue += hue_increase_per_step
                     if starting_hue % 360 != ending_hue % 360:
                         if hue >= ending_hue:
