@@ -1,19 +1,22 @@
 from abc import abstractmethod
 from collections import MutableSequence
-from typing import overload
+import six
+if six.PY3:
+    from typing import overload
 
 
 class CircularList(MutableSequence):
 
-    @overload
+    #@overload
     @abstractmethod
-    def __delitem__(self, i: int) -> None: ...
+    def __delitem__(self, i):
+        pass
 
-    @overload
+    #@overload
     @abstractmethod
-    def __delitem__(self, i: slice) -> None: ...
-
-    def __delitem__(self, i: int) -> None:
+    def __delitem__(self, i): 
+        pass
+    def __delitem__(self, i):
         pass
 
     def __init__(self, data=None):

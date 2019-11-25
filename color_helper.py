@@ -41,6 +41,12 @@ def rgb_to_hue(rgb):
     G = rgb[1]
     B = rgb[2]
 
+def RGB_to_color(r, g, b):
+    """Convert three 8-bit red, green, blue component values to a single 24-bit
+    color value.
+    """
+    return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF)
+
 
 if __name__ == "__main__":
 

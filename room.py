@@ -32,6 +32,7 @@ class Room:
                 import Adafruit_GPIO.SPI as SPI
                 SPI_PORT = 0
                 SPI_DEVICE = 0
+
                 self.leds = af.WS2801Pixels(self.num_leds, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE), gpio=GPIO)
             self.demo = False
         except ImportError:
@@ -204,7 +205,7 @@ class Room:
             if six.PY3:
                 self.leds[led_index] = color_int  # set color
             elif six.PY2:
-                self.leds.set_pixel(led_index, af.RGB_to_color(min(int(new_r), 255), min(int(new_g), 255), min(int(new_b), 255)))
+                self.leds.set_pixel(led_index, color_helper.RGB_to_color(min(int(new_r), 255), min(int(new_g), 255), min(int(new_b), 255)))
 
         if not self.demo:
             self.leds.show()
@@ -316,7 +317,8 @@ class Room:
                         if six.PY3:
                             self.leds[led_num] = color_helper.hue_to_rgb(math.floor((hue + 720) % 360))
                         elif six.PY2:
-                            self.leds.set_pixel(led_num, af.RGB_to_color(color_helper.hue_to_rgb(math.floor((hue + 720) % 360))))
+                            color_tuple = color_helper.hue_to_rgb(math.floor((hue + 720) % 360))
+                            self.leds.set_pixel(led_num, color_helper.RGB_to_color(color_tuple[0], color_tuple[1], color_tuple[2]))
                     hue += hue_increase_per_step
                     if starting_hue % 360 != ending_hue % 360:
                         if hue >= ending_hue:
