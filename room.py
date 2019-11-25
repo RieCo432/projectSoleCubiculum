@@ -229,7 +229,7 @@ class Room:
     # speed is how quickly the starting hue moves around in steps per second (1 step = 1 LED)
     # starting hue determines which color is used at the main point, hue is in degrees (0 is red, 120 is green,
     # 240 is green)
-    def rainbow(self, list_of_leds, start_index=None, end_index=None, cycles=0, speed=10, starting_hue=0.0):
+    def hue_span_color_cylce(self, list_of_leds, start_index=None, end_index=None, cycles=0, speed=10, starting_hue=0.0, ending_hue=360.0, compress=1):
         # initialize a circular list to store led numbers that are involved
 
         # if no starting point is given, select first led of first ceiling edge
@@ -252,7 +252,7 @@ class Room:
         list_of_leds.shiftBackwardN(start_index)
 
         # determine how much the hue needs to increase per LED/step
-        hue_increase_per_step = 360.0 / len(list_of_leds)
+        hue_increase_per_step = (ending_hue - starting_hue) / len(list_of_leds)
 
         # initialize loop and counter variables
         cycle = 0
@@ -289,6 +289,10 @@ class Room:
                         self.leds[led_num] = color_helper.hue_to_rgb(math.floor(hue))
                     hue += hue_increase_per_step
                     hue %= 360
+                    if hue >= ending_hue:
+                        rest = hue - ending_hue
+                        hue = starting_hue + rest
+                        hue %= 360
 
                 # update physical LEDs
                 stamp = datetime.now()
