@@ -399,9 +399,9 @@ class Room:
                     color = (0, 0, 0)
                     if i % 11 == 0:
                         color = (0, 0, 255)
-                    elif i % 11 in [1, 2, 5, 6, 9]:
+                    elif i % 11 in [1, 2, 5, 6, 9, 10]:
                         color = (255, 0, 0)
-                    elif i % 11 in [3, 4, 7, 8, 10]:
+                    elif i % 11 in [3, 4, 7, 8]:
                         color = (0, 255, 0)
                     if six.PY3:
                         self.leds[ceiling_led_list[i]] = color
