@@ -416,7 +416,7 @@ class Room:
                 for edge in self.vertical_edges_up:
                     for i in range(edge.length):
                         offset = 50 + 2*i
-                        self.set_led(edge.leds[i], (255, offset + randint(-20, 20)))
+                        self.set_led(edge.leds[i], (255, offset + randint(-20, 20), 0))
                 last_vertical_stamp = datetime.now()
                 update_necessary = True
 
