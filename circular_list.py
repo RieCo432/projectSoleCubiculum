@@ -16,8 +16,16 @@ class CircularList(MutableSequence):
     @abstractmethod
     def __delitem__(self, i): 
         pass
+
+    #@overload
+    #@abstractmethod
     def __delitem__(self, i):
         pass
+
+    #@overload
+    @abstractmethod
+    def __len__(self):
+        return len(self._data)
 
     def __init__(self, data=None):
         super(CircularList, self).__init__()

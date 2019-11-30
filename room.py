@@ -414,9 +414,9 @@ class Room:
 
             if (datetime.now() - last_vertical_stamp).total_seconds() >= 0.05:
                 for edge in self.vertical_edges_up:
-                    for i in range(len(edge)):
+                    for i in range(edge.length):
                         offset = 50 + 2*i
-                        self.set_led(edge._data[i], (255, offset + randint(-20, 20)))
+                        self.set_led(edge.leds[i], (255, offset + randint(-20, 20)))
                 last_vertical_stamp = datetime.now()
                 update_necessary = True
 
