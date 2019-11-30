@@ -395,7 +395,7 @@ class Room:
         while (datetime.now() - startTime).total_seconds() <= duration:
 
             if (datetime.now() - last_ceiling_stamp).total_seconds() >= 0.1:
-                for i in ceiling_led_list:
+                for i in range(len(ceiling_led_list)):
                     color = (0, 0, 0)
                     if i % 5 == 0:
                         color = (0, 0, 255)
@@ -404,9 +404,9 @@ class Room:
                     elif i % 5 == 3 or i % 5 == 4:
                         color = (0, 255, 0)
                     if six.PY3:
-                        self.leds[i] = color
+                        self.leds[ceiling_led_list[i]] = color
                     elif six.PY2:
-                        self.leds.set_pixel(i, color_helper.RGB_to_color(color[0], color[1], color[2]))
+                        self.leds.set_pixel(ceiling_led_list[i], color_helper.RGB_to_color(color[0], color[1], color[2]))
 
                 ceiling_led_list.shiftForward()
                 last_ceiling_stamp = datetime.now()
