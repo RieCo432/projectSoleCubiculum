@@ -4,6 +4,7 @@ import time
 import color_helper
 from circular_list import CircularList
 import six
+from random import randint
 
 
 class Room:
@@ -390,26 +391,33 @@ class Room:
         # print(ceiling_led_list._data)
 
         last_ceiling_stamp = datetime.now()
+        last_vertical_stamp = datetime.now()
         update_necessary = False
 
         while (datetime.now() - startTime).total_seconds() <= duration:
 
-            if (datetime.now() - last_ceiling_stamp).total_seconds() >= 0.1:
-                for i in range(len(ceiling_led_list)):
+            if (datetime.now() - last_ceiling_stamp).total_seconds() >= 1:
+                for i in ceiling_led_list:
                     color = (0, 0, 0)
-                    if i % 11 == 0:
+                    color_pick = randint(0, 10)
+                    if color_pick == 0:
                         color = (0, 0, 255)
-                    elif i % 11 in [1, 2, 5, 6, 9, 10]:
+                    elif 1 <= color_pick <= 6:
                         color = (255, 0, 0)
-                    elif i % 11 in [3, 4, 7, 8]:
+                    elif 7 <= color_pick <= 10:
                         color = (0, 255, 0)
-                    if six.PY3:
-                        self.leds[ceiling_led_list[i]] = color
-                    elif six.PY2:
-                        self.leds.set_pixel(ceiling_led_list[i], color_helper.RGB_to_color(color[0], color[1], color[2]))
+                    self.set_led(i, color)
 
                 ceiling_led_list.shiftForward()
                 last_ceiling_stamp = datetime.now()
+                update_necessary = True
+
+            if (datetime.now() - last_vertical_stamp).total_seconds() >= 0.05:
+                for edge in self.vertical_edges_up:
+                    for i in range(len(edge)):
+                        offset = 50 + 2*i
+                        self.set_led(edge._data[i], (255, offset + randint(-20, 20)))
+                last_vertical_stamp = datetime.now()
                 update_necessary = True
 
 
