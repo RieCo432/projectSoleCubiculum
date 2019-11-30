@@ -231,6 +231,25 @@ class Room:
 
         return list_of_leds
 
+    def update(self):
+        if not self.demo:
+            self.leds.show()
+        else:
+            print(self.leds)
+
+    def set_led(self, led_num, color):
+        if six.PY3 or self.demo:
+            self.leds[led_num] = color
+        elif six.PY2:
+            self.leds.set_pixel_rgb(led_num, color[0], color[1], color[2])
+
+    def get_led(self, led_num):
+
+        if six.PY3 or self.demo:
+            return self.leds[led_num]
+        elif six.PY2:
+            return self.leds.get_pixel_rgb(led_num)
+
     # build a list of lists of LEDs, enabling vertical upwards effect with or without horizontal elements
     def build_list_vertical_straight(self, include_horizontal = True):
         list_of_leds = CircularList()
@@ -357,6 +376,54 @@ class Room:
                     # counter
                     if end in list_of_leds[-actual_movement:0]:
                         cycle += 1
+
+    def christmas_animation(self, duration=3600):
+
+        startTime = datetime.now()
+
+        ceiling_led_list = CircularList()
+
+        for edge in self.ceiling_edges_clockwise:
+            for led_number in edge.leds:
+                ceiling_led_list.append(led_number)
+
+        print(ceiling_led_list._data)
+
+        last_ceiling_stamp = datetime.now()
+        update_necessary = False
+
+        while (datetime.now() - startTime).total_seconds() <= duration:
+
+            if (datetime.now() - last_ceiling_stamp).total_seconds() >= 0.1:
+                for i in ceiling_led_list:
+                    color = (0, 0, 0)
+                    if i % 5 == 0:
+                        color = (0, 0, 255)
+                    elif i % 5 == 1 or i % 5 == 2:
+                        color = (255, 0, 0)
+                    elif i % 5 == 3 or i % 5 == 4:
+                        color = (0, 255, 0)
+                    if six.PY3:
+                        self.leds[i] = color
+                    elif six.PY2:
+                        self.leds.set_pixel(i, color_helper.RGB_to_color(color[0], color[1], color[2]))
+
+                ceiling_led_list.shiftForward()
+                last_ceiling_stamp = datetime.now()
+                update_necessary = True
+
+
+            if update_necessary:
+                update_necessary = False
+                self.update()
+
+
+
+
+
+            time.sleep(0.1)
+
+
 
 
 
