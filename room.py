@@ -387,7 +387,7 @@ class Room:
             for led_number in edge.leds:
                 ceiling_led_list.append(led_number)
 
-        print(ceiling_led_list._data)
+        # print(ceiling_led_list._data)
 
         last_ceiling_stamp = datetime.now()
         update_necessary = False
@@ -397,11 +397,11 @@ class Room:
             if (datetime.now() - last_ceiling_stamp).total_seconds() >= 0.1:
                 for i in range(len(ceiling_led_list)):
                     color = (0, 0, 0)
-                    if i % 5 == 0:
+                    if i % 11 == 0:
                         color = (0, 0, 255)
-                    elif i % 5 == 1 or i % 5 == 2:
+                    elif i % 11 in [1, 2, 5, 6, 9]:
                         color = (255, 0, 0)
-                    elif i % 5 == 3 or i % 5 == 4:
+                    elif i % 11 in [3, 4, 7, 8, 10]:
                         color = (0, 255, 0)
                     if six.PY3:
                         self.leds[ceiling_led_list[i]] = color
