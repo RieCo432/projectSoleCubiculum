@@ -399,7 +399,7 @@ class Room:
             if (datetime.now() - last_ceiling_stamp).total_seconds() >= 1:
                 for i in ceiling_led_list:
                     color = (0, 0, 0)
-                    color_pick = randint(0, 10)
+                    color_pick = randint(1, 10)
                     if color_pick == 0:
                         color = (0, 0, 255)
                     elif 1 <= color_pick <= 6:
