@@ -420,14 +420,9 @@ class Room:
                 last_vertical_stamp = datetime.now()
                 update_necessary = True
 
-
             if update_necessary:
                 update_necessary = False
                 self.update()
-
-
-
-
 
             time.sleep(0.1)
 
