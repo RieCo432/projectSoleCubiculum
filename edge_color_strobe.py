@@ -5,9 +5,9 @@ from random import randint
 
 living_room = build_living_room()
 time.sleep(2)
-colors = [(0,0,0), (255,0,0), (0,255,0), (0,0,255), (255,255,255)]
+colors = [(0,0,0), (255,0,0), (255, 0, 0), (0,255,0), (0, 255, 0), (0, 0, 255), (0,0,255), (255,255,255)]
 while True:
-    number_of_edges = randint(0, 3)
+    number_of_edges = randint(0, 2)
     edge_nums = []
     for i in range(number_of_edges):
         edge_nums.append(randint(0, len(living_room.all_edges_in_order)-1))
