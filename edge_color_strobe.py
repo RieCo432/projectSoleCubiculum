@@ -20,3 +20,4 @@ while True:
             living_room.set_led(led_num, color)
 
     living_room.update()
+    time.sleep(0.2)
